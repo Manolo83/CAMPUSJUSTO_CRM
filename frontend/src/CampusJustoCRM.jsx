@@ -1569,6 +1569,7 @@ function BreakdownTable({ title, icon: Icon, rows, empty, hideStatusLabel }) {
 
 function UsuariosView({ users, currentUser, allData, openNewUser, onUpdate, onDelete }) {
   const isDueno = currentUser.rol === "Dueño";
+  const [pwUser, setPwUser] = useState(null);
 
   function toggleEstado(u) {
     onUpdate({ ...u, estado: u.estado === "Activo" ? "Inactivo" : "Activo" });
@@ -1629,6 +1630,9 @@ function UsuariosView({ users, currentUser, allData, openNewUser, onUpdate, onDe
                 <button onClick={() => toggleEstado(u)} className="ij-sans" style={{ background: "none", border: `1px solid ${C.verdeJusto}33`, borderRadius: 6, padding: "5px 9px", fontSize: 11, cursor: "pointer", color: C.verdeJusto }}>
                   {u.estado === "Activo" ? "Desactivar" : "Activar"}
                 </button>
+                <button onClick={() => setPwUser(u)} title="Cambiar contraseña" style={{ background: "none", border: `1px solid ${C.verdeJusto}33`, borderRadius: 6, padding: "5px 8px", cursor: "pointer" }}>
+                  <KeyRound size={13} color={C.verdeJusto} />
+                </button>
                 {(isDueno || u.id === currentUser.id) && (
                   <button onClick={() => handleDelete(u)} style={{ background: "none", border: "1px solid #B5533C33", borderRadius: 6, padding: "5px 8px", cursor: "pointer" }}>
                     <Trash2 size={13} color="#B5533C" />
@@ -1647,7 +1651,39 @@ function UsuariosView({ users, currentUser, allData, openNewUser, onUpdate, onDe
         </div>
         <SecondaryButton icon={Download} onClick={downloadBackup}>Descargar respaldo</SecondaryButton>
       </div>
+
+      {pwUser && (
+        <ChangePasswordModal
+          user={pwUser}
+          onClose={() => setPwUser(null)}
+          onSave={(password) => { onUpdate({ ...pwUser, password }); setPwUser(null); }}
+        />
+      )}
     </div>
+  );
+}
+
+function ChangePasswordModal({ user, onClose, onSave }) {
+  const [pwd, setPwd] = useState("");
+  const [pwd2, setPwd2] = useState("");
+  const canSave = pwd.trim().length >= 4 && pwd === pwd2;
+
+  function handleSave() {
+    if (!canSave) return;
+    onSave(pwd);
+  }
+
+  return (
+    <Modal title={`Cambiar contraseña · ${user.nombre}`} onClose={onClose}>
+      <FieldInput label="Nueva contraseña" type="password" value={pwd} onChange={setPwd} required placeholder="Mínimo 4 caracteres" />
+      <FieldInput label="Confirmar contraseña" type="password" value={pwd2} onChange={setPwd2} required placeholder="Repite la contraseña" />
+      {pwd && pwd2 && pwd !== pwd2 && (
+        <div className="ij-sans" style={{ fontSize: 11.5, color: "#B5533C", marginBottom: 10 }}>Las contraseñas no coinciden.</div>
+      )}
+      <div style={{ marginTop: 8 }}>
+        <PrimaryButton icon={Save} onClick={handleSave} full>Guardar contraseña</PrimaryButton>
+      </div>
+    </Modal>
   );
 }
 
